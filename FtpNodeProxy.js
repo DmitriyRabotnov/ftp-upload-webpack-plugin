@@ -18,7 +18,7 @@ class FtpNodeProxy {
       pasvTimeout = 10000,
       keepalive = 10000,
       remotePath = '/',
-      debugInfo = true
+      debugInfo = false
     } = options
 
     this.debugInfo = debugInfo
