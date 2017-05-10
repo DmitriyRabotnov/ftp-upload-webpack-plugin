@@ -13,6 +13,7 @@ module.exports = {
     pasvTimeout: 10000, // - How long (in milliseconds) to wait for a PASV data connection to be established
     keepalive: 10000, // - How often (in milliseconds) to send a 'dummy' (NOOP) command to keep the connection alive
     remotePath: '/' // - Remote path at the host
+    debugInfo: false // - display debug info
 }
 ```
 ### Usage:
