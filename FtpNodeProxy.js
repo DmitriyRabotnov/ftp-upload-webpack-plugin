@@ -46,6 +46,11 @@ class FtpNodeProxy {
     this.ftpClient = new FtpClient()
 
     this.events = new Events()
+
+    this.chain = Promise.resolve()
+
+    this.totalCountFiles = 0
+    this.processedFiles = 0
   }
 
   Connect() {
@@ -76,7 +81,7 @@ class FtpNodeProxy {
 
   Put(data, file) {
     return new Promise((resolve, reject) => {
-      const fileName = path.basename(file)
+      const fileName = file.substring(path.dirname(file).length + 1)
       const newFileName = path.join(this.options.remotePath, fileName)
 
       this.debugInfo &&
@@ -101,13 +106,14 @@ class FtpNodeProxy {
     })
   }
 
-  async writeFile(file, data, options_, callback) {
+  writeFile(file, data, _options, callback) {
+    this.totalCountFiles++
     this.debugInfo &&
       console.log(chalk.yellow('\nftp-upload-plugin: trying to send a file: ' + file))
 
-    if (typeof options_ === 'function') {
-      callback = options_
-      options_ = {}
+    if (typeof _options === 'function') {
+      callback = _options
+      _options = {}
     }
     if (!Buffer.isBuffer(data)) {
       data = Buffer.from(data, 'utf8')
@@ -115,24 +121,27 @@ class FtpNodeProxy {
 
     this.events.on('complete', callback)
 
-    const connect = await this.Connect()
-
-    if (connect === 'ok') {
-      const put = await this.Put(data, file)
-
-      if (await this.Put(data, file) === 'ok') {
-        this.ftpClient.end()
+    this.chain = this.chain
+      .then(() => {
+        return this.Connect()
+      })
+      .then((response) => {
+        return this.Put(data, file)
+      })
+      .then((response) => {
+        this.processedFiles++
+        if (this.processedFiles >= this.totalCountFiles) {
+          this.ftpClient.end()
+          this.debugInfo &&
+            console.log(chalk.cyan('\nftp-upload-plugin: connection is closed'))
+          this.events.emit('complete')
+        }
+        return 0
+      })
+      .catch((error) => {
         this.debugInfo &&
-          console.log(chalk.cyan('\nftp-upload-plugin: connection is closed'))
-        this.events.emit('complete')
-      } else {
-        this.debugInfo &&
-          console.log(chalk.red('\nftp-upload-plugin: something wrong: ' + put.message))
-      }
-    } else {
-      this.debugInfo &&
-        console.log(chalk.red('\nftp-upload-plugin: something wrong: ' + connect.message))
-    }
+          console.log(chalk.red('\nftp-upload-plugin: something wrong: ' + error.message))
+      })
   }
 
   mkdirp(path, callback) {
