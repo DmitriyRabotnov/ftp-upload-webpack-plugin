@@ -1,6 +1,6 @@
 {
   "name": "ftp-upload-webpack-plugin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "webpack2 plugin that uploads bundles to a ftp server with config file with remote path",
   "main": "index.js",
   "scripts": {
@@ -14,7 +14,11 @@
     "webpack",
     "plugin",
     "ftp",
-    "upload"
+    "upload",
+    "promise",
+    "chain",
+    "async",
+    "await"
   ],
   "author": {
     "name": "Dmitriy Rabotnov",

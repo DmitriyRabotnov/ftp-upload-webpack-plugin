@@ -99,12 +99,51 @@ class FtpNodeProxy {
         }
         this.debugInfo &&
           console.log(chalk.green('\nftp-upload-plugin: it is OK!'))
-        resolve('ok')
+        resolve()
       }
 
       this.ftpClient.put(data, newFileName, callBack.bind(this))
     })
   }
+
+  _promiseChainWriteFile(file, data) {
+    return this.chain
+      .then(() => this.Connect())
+      .then(() => this.Put(data, file))
+      .then(() => {
+        this.processedFiles++
+        if (this.processedFiles >= this.totalCountFiles) {
+          this.ftpClient.end()
+          this.debugInfo &&
+            console.log(chalk.cyan('\nftp-upload-plugin: connection is closed'))
+          this.events.emit('complete')
+        }
+      })
+      .catch((error) => {
+        this.debugInfo &&
+          console.log(chalk.red('\nftp-upload-plugin: something wrong: ' + error.message))
+      })
+  }
+
+  async _asyncWriteFile(file, data) {
+    try {
+      await this.chain
+      await this.Connect()
+      await this.Put(data, file)
+
+      this.processedFiles++
+      if (this.processedFiles >= this.totalCountFiles) {
+        this.ftpClient.end()
+        this.debugInfo &&
+          console.log(chalk.cyan('\nftp-upload-plugin: connection is closed'))
+        this.events.emit('complete')
+      }
+    } catch (error) {
+      this.debugInfo &&
+        console.log(chalk.red('\nftp-upload-plugin: something wrong: ' + error.message))
+    }
+  }
+
 
   writeFile(file, data, _options, callback) {
     this.totalCountFiles++
@@ -121,27 +160,7 @@ class FtpNodeProxy {
 
     this.events.on('complete', callback)
 
-    this.chain = this.chain
-      .then(() => {
-        return this.Connect()
-      })
-      .then((response) => {
-        return this.Put(data, file)
-      })
-      .then((response) => {
-        this.processedFiles++
-        if (this.processedFiles >= this.totalCountFiles) {
-          this.ftpClient.end()
-          this.debugInfo &&
-            console.log(chalk.cyan('\nftp-upload-plugin: connection is closed'))
-          this.events.emit('complete')
-        }
-        return 0
-      })
-      .catch((error) => {
-        this.debugInfo &&
-          console.log(chalk.red('\nftp-upload-plugin: something wrong: ' + error.message))
-      })
+    this.chain = this._asyncWriteFile(file, data) // this._promiseChainWriteFile(file, data)
   }
 
   mkdirp(path, callback) {
