@@ -1,7 +1,7 @@
 const FtpClient = require('ftp')
 const path = require('path')
 const chalk = require('chalk')
-const Events = require('events')
+const EventEmitter = require('events')
 
 class FtpNodeProxy {
   constructor(options) {
@@ -45,7 +45,7 @@ class FtpNodeProxy {
 
     this.ftpClient = new FtpClient()
 
-    this.events = new Events()
+    this.events = new EventEmitter()
 
     this.chain = Promise.resolve()
 
