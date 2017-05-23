@@ -82,7 +82,7 @@ class FtpNodeProxy {
   Put(data, file) {
     return new Promise((resolve, reject) => {
       const fileName = file.substring(path.dirname(file).length + 1)
-      const newFileName = path.join(this.options.remotePath, fileName)
+      const newFileName = this.options.remotePath + '/' + fileName
 
       this.debugInfo &&
         console.log(chalk.gray('\nftp-upload-plugin: found that file name is: ' + fileName))
@@ -101,7 +101,6 @@ class FtpNodeProxy {
           console.log(chalk.green('\nftp-upload-plugin: it is OK!'))
         resolve()
       }
-
       this.ftpClient.put(data, newFileName, callBack.bind(this))
     })
   }
@@ -160,7 +159,7 @@ class FtpNodeProxy {
 
     this.events.on('complete', callback)
 
-    this.chain = this._asyncWriteFile(file, data) // this._promiseChainWriteFile(file, data)
+    this.chain = this._asyncWriteFile(file, data) // this._promiseChainWriteFile(file, data)  // 
   }
 
   mkdirp(path, callback) {
